@@ -1,10 +1,9 @@
 package com.baby.babycareproductsshop.user;
 
-import com.baby.babycareproductsshop.common.AppProperties;
-import com.baby.babycareproductsshop.common.Const;
-import com.baby.babycareproductsshop.common.MyCookieUtils;
-import com.baby.babycareproductsshop.common.ResVo;
+import com.baby.babycareproductsshop.common.*;
+import com.baby.babycareproductsshop.entity.user.UserEntity;
 import com.baby.babycareproductsshop.exception.AuthErrorCode;
+import com.baby.babycareproductsshop.exception.CommonErrorCode;
 import com.baby.babycareproductsshop.exception.RestApiException;
 import com.baby.babycareproductsshop.product.ProductWishListMapper;
 import com.baby.babycareproductsshop.product.model.ProductSelWishListVo;
@@ -18,12 +17,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.baby.babycareproductsshop.common.Const.rtName;
 
@@ -40,6 +42,10 @@ public class UserService {
     private final AppProperties appProperties;
     private final MyCookieUtils myCookieUtils;
     private final AuthenticationFacade authenticationFacade;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final UserRepository userRepository;
+    private final UserSignupClauseRepository signupClauseRepository;
+
 
     //회원가입
     @Transactional
@@ -61,13 +67,21 @@ public class UserService {
 
     //회원가입 약관 조회
     public List<UserClauseVo> getClause() {
-        return userMapper.selClause();
+        List<UserClauseVo> result = signupClauseRepository.findAllByRequired("Y").stream()
+                .map(item -> UserClauseVo.builder()
+                        .iclause(item.getIclause().intValue())
+                        .title(item.getTitle())
+                        .contents(item.getContents())
+                        .required(item.getRequired())
+                        .build())
+                .toList();
+        return result;
     }
 
     //아이디 중복 체크
     public ResVo postCheckUid(UserCheckUidDto dto) {
-        UserSignInProcDto result = userMapper.selSignInInfoByUid(dto.getUid());
-        if (result != null) {
+        Optional<UserEntity> result = userRepository.findByUid(dto.getUid());
+        if (result.isPresent()) {
             throw new RestApiException(AuthErrorCode.DUPLICATED_UID);
         }
         return new ResVo(Const.SUCCESS);
@@ -75,35 +89,53 @@ public class UserService {
 
     //로그인
     public UserSignInVo postSignIn(HttpServletResponse res, UserSignInDto dto) {
-        UserSignInProcDto vo = userMapper.selSignInInfoByUid(dto.getUid());
-        if (vo == null || !passwordEncoder.matches(dto.getUpw(), vo.getUpw())) {
+        Optional<UserEntity> optEntity = userRepository.findByProviderTypeAndUid(ProviderTypeEnum.LOCAL, dto.getUid());
+        UserEntity entity = optEntity.orElseThrow(() -> new RestApiException(AuthErrorCode.LOGIN_FAIL));
+        if (!passwordEncoder.matches(dto.getUpw(), entity.getUpw())) {
             throw new RestApiException(AuthErrorCode.LOGIN_FAIL);
         }
-        if (vo.getUnregisterFl() == 1) {
+        if (entity.getUnregisterFl() == 1) {
             throw new RestApiException(AuthErrorCode.UNREGISTER_USER);
         }
-        MyPrincipal myPrincipal = new MyPrincipal(vo.getIuser());
+
+        MyPrincipal myPrincipal = MyPrincipal.builder()
+                .iuser(entity.getIuser().intValue())
+                .build();
+        myPrincipal.getRoles().add(entity.getRole().name());
+
         String at = jwtTokenProvider.generateAccessToken(myPrincipal);
         String rt = jwtTokenProvider.generateRefreshToken(myPrincipal);
 
         int rtCookieMaxAge = appProperties.getJwt().getRefreshCookieMaxAge();
         myCookieUtils.deleteCookie(res, rtName);
         myCookieUtils.setCookie(res, rtName, rt, rtCookieMaxAge);
+        log.info("rt : {}", rt);
+
+        String iuser = String.valueOf(entity.getIuser());
+        redisTemplate.opsForValue().set(iuser, rt, 1296000, TimeUnit.SECONDS);
+
+        String redisRt = redisTemplate.opsForValue().get(iuser);
+        log.info("redisRt : {}", redisRt);
 
         return UserSignInVo.builder()
                 .result(Const.SIGN_IN_SUCCESS)
                 .accessToken(at)
-                .nm(vo.getNm())
+                .nm(entity.getNm())
                 .build();
     }
 
     //마이 페이지 회원 정보 조회
     public UserSelMyInfoVo getMyInfo() {
         int iuser = authenticationFacade.getLoginUserPk();
-        UserSelMyInfoVo myInfoVo = userMapper.selMyInfo(iuser);
-        List<ProductSelWishListVo> wishList = wishListMapper.selWishList(iuser);
-        myInfoVo.setMyWishList(wishList);
-        return myInfoVo;
+        Optional<UserEntity> optUserEntity = userRepository.findById((long) iuser);
+        if (optUserEntity.isPresent()) {
+            UserEntity userEntity = optUserEntity.get();
+            UserSelMyInfoVo myInfoVo = userMapper.selMyInfo(iuser);
+            List<ProductSelWishListVo> wishList = wishListMapper.selWishList(iuser);
+            myInfoVo.setMyWishList(wishList);
+            return myInfoVo;
+        }
+        throw new RestApiException(CommonErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     //회원 정보 수정 전 비밀번호 체크

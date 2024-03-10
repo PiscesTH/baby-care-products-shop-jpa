@@ -1,12 +1,12 @@
 package com.baby.babycareproductsshop.common;
 
 public class Const {
+    public static final int PAGE_SIZE = 10;
+
     public static final int SUCCESS = 1;
     public static final int FAIL = 0;
-
     public static final int SIGN_IN_SUCCESS = 1;
-
-    public static final int PAGE_ROWCOUNT = 5;
+    public static final int PAGE_ROWCOUNT = 5; // 리뷰 페이징
 
     public static final String PASSWORD_IS_BLANK = "비밀번호를 입력해주세요.";
     public static final String ID_IS_BLANK = "아이디를 입력해주세요.";

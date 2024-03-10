@@ -44,3 +44,4 @@ logback-spring.xml
 gradle-wrapper.jar
 gradle-wrapper.properties
 logs
+import.sql

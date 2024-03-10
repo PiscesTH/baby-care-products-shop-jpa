@@ -38,6 +38,12 @@ public class MyFileUtils {
     public void delDirTrigger(String relativePath) {
         delDir(uploadPrefixPath + relativePath);
     }
+    public void delFile(String filePath) {//파일 삭제
+        File file = new File(uploadPrefixPath + filePath);
+        if(file.exists()) {
+            file.delete();
+        }
+    }
 
     public void delDir(String dirPath) {
         File dir = new File(dirPath);

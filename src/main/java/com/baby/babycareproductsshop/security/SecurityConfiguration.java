@@ -39,6 +39,8 @@ public class SecurityConfiguration {
                                         "/api/product/cart",
                                         "/api/product/login-main"
                                 ).authenticated()
+                                .requestMatchers("/api/admin").permitAll()
+                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/api/board").authenticated()
                                 .requestMatchers(HttpMethod.DELETE, "/api/board").authenticated()
                                 .requestMatchers(HttpMethod.GET, "/api/board/write").authenticated()

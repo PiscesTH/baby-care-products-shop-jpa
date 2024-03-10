@@ -9,7 +9,7 @@ import static com.baby.babycareproductsshop.common.Const.PASSWORD_IS_BLANK;
 
 @Data
 public class UserSignInDto {
-    @Schema(title = "아이디" ,defaultValue = "hubble")
+    @Schema(title = "아이디" ,defaultValue = "ADMIN")
     @NotBlank(message = NM_IS_BLANK)
     private String uid;
     @Schema(title = "비밀번호" ,defaultValue = "xptmxm12!@")

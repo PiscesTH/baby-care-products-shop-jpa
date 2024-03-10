@@ -8,13 +8,13 @@
         COUNT(DISTINCT R.iorder) AS reviewCnt,
         IF(COUNT(L.iuser) > 0, 1, 0) AS likeProduct
         FROM t_product A
-        JOIN t_middle_category M ON A.imiddle = M.imiddle
+        LEFT JOIN t_middle_category M ON A.candidate_key = M.candidate_key
         LEFT JOIN t_review R ON A.iproduct = R.iproduct
         LEFT JOIN t_wish_list L ON A.iproduct = L.iproduct
         <where>
             <if test='cat != null and cat.size() > 0'>
                 <foreach collection="cat" item="cat" separator="OR" open="(" close=")">
-                    (A.imiddle = #{cat.imiddle} and A.imain = #{cat.imain})
+                    (M.imiddle = #{cat.imiddle} and M.imain = #{cat.imain})
                 </foreach>
             </if>
             <if test='cat == null or cat.size() == 0'>1=1</if>
@@ -106,17 +106,17 @@
     </select>
 
     <select id="getProductList">
-        SELECT A.iproduct, A.imiddle, A.imain, A.product_nm, A.price, A.rc_fl, A.pop_fl, A.new_fl, A.rep_pic,
+        SELECT A.iproduct, M.imiddle, M.imain, A.product_nm, A.price, A.rc_fl, A.pop_fl, A.new_fl, A.rep_pic,
         COUNT(DISTINCT R.iorder) AS reviewCnt,
         IF(COUNT(L.iuser) > 0, 1, 0) AS likeProduct
         FROM t_product A
-        JOIN t_middle_category M ON A.imiddle = M.imiddle
+        LEFT JOIN t_middle_category M ON A.candidate_key = M.candidate_key
         LEFT JOIN t_review R ON A.iproduct = R.iproduct
         LEFT JOIN t_wish_list L ON A.iproduct = L.iproduct
         <where>
-            <if test="imiddle !=0 and imain !=0">A.imiddle = #{imiddle} AND A.imain = #{imain}</if>
-            <if test="imiddle ==0 and imain !=0">A.imain = #{imain}</if>
-            <if test="imiddle !=0 and imain ==0">A.imiddle = #{imiddle}</if>
+            <if test="imiddle !=0 and imain !=0">M.imiddle = #{imiddle} AND M.imain = #{imain}</if>
+            <if test="imiddle ==0 and imain !=0">M.imain = #{imain}</if>
+            <if test="imiddle !=0 and imain ==0">M.imiddle = #{imiddle}</if>
         </where>
         GROUP BY A.iproduct
         ORDER BY

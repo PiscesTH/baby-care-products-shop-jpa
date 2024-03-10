@@ -12,9 +12,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "나나빛 Ver. 1",
-                description = "2차 프로젝트 나나빛",
-                version = "1.0.0"),
+                title = "나나빛 Ver. 2",
+                description = "3차 프로젝트 나나빛",
+                version = "2.0.0"),
         security = @SecurityRequirement(name = "authorization")
 )
 @SecurityScheme(

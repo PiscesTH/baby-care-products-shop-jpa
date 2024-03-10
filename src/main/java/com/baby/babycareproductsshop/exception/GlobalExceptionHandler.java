@@ -47,6 +47,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return handleExceptionInternal(CommonErrorCode.INVALID_PARAMETER, CommonErrorCode.INVALID_PARAMETER.getMessage());
     }
 
+    @ExceptionHandler(NumberFormatException.class)
+    public ResponseEntity<Object> NumberFormatException(NumberFormatException e) {
+        log.warn("NumberFormatException", e);
+        return handleExceptionInternal(AuthErrorCode.SEARCH_FAILED_ERROR, AuthErrorCode.SEARCH_FAILED_ERROR.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleException(Exception e) {
         log.warn("handleException", e);

@@ -34,7 +34,7 @@ public class ProductSearchDto {
     @JsonIgnore
     private int startIdx;
     @JsonIgnore
-    private int rowCount = 5;
+    private int rowCount = 12;
 
     @Schema(title = "페이징처리",defaultValue = "1")
     public void setPage(int page) {

@@ -19,7 +19,7 @@ public class ProductListDto {
     @JsonIgnore
     private int startIdx;
     @JsonIgnore
-    private int rowCount = 5;
+    private int rowCount = 12;
 
     @Schema(title = "페이지",defaultValue = "1")
     public void setPage(int page) {

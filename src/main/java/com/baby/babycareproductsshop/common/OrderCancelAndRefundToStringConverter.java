@@ -14,7 +14,7 @@ public class OrderCancelAndRefundToStringConverter implements Converter<Integer,
                 orderCancelAndRefund = ProcessState.ORDER_CANCEL.getProcessState();
                 break;
             case 2:
-                orderCancelAndRefund = ProcessState.RETURN.getProcessState();
+                orderCancelAndRefund = ProcessState.REFUND.getProcessState();
                 break;
         }
         return orderCancelAndRefund;

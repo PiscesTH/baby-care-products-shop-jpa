@@ -29,7 +29,7 @@ public class ProcessStateCodeToStringConverter implements Converter<Integer, Str
                 processStateMsg = ProcessState.ORDER_CANCEL.getProcessState();
                 break;
             case 6:
-                processStateMsg = ProcessState.RETURN.getProcessState();
+                processStateMsg = ProcessState.REFUND.getProcessState();
                 break;
         }
         return processStateMsg;
